@@ -78,18 +78,12 @@ func Writer(w io.Writer) {
 
 // Print style prefix, then args formated with fmt.Println.
 func (style Style) Log(args ...interface{}) error {
-	if style == NoOp || len(args) == 0 || args[0] == nil {
-		return nil
-	}
 	return style.log("", nil, args...)
 }
 
 // Print style prefix, then args formatted with fmt.Printf, and end with
 // newline.
 func (style Style) Logf(format string, args ...interface{}) error {
-	if style == NoOp || len(args) == 0 || args[0] == nil {
-		return nil
-	}
 	return style.log(format, nil, args...)
 }
 
@@ -110,23 +104,37 @@ func (style Style) String() string {
 //	call has arguments but no formatting directives
 func (style Style) log(format string, _ interface{}, args ...interface{}) error {
 	const skip = 2
+	if len(args) == 0 || args[0] == nil {
+		return nil
+	}
+	err, ok := args[0].(error)
+	if !ok {
+		err = nil
+	}
+	if style == NoOp {
+		return err
+	}
 	w, ok := writer.Load().(io.Writer)
 	if !ok || w == nil {
 		w = os.Stdout
 	}
-	pc, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		fmt.Fprintf(w, "pc[%#x] ", pc)
-	}
-	switch style {
-	case FileLine:
-		relfile, err := filepath.Rel(wd(), file)
-		if err != nil || relfile[0] == '.' {
-			relfile = relgopath(file)
+	if style > Plain {
+		pc, file, line, ok := runtime.Caller(skip)
+		if !ok {
+			fmt.Fprintf(w, "pc[%#x] ", pc)
+		} else {
+			switch style {
+			case FileLine:
+				relfile, err := filepath.Rel(wd(), file)
+				if err != nil || relfile[0] == '.' {
+					relfile = relgopath(file)
+				}
+				fmt.Fprint(w, relfile, ":", line, ": ")
+			case Func:
+				name := runtime.FuncForPC(pc).Name()
+				fmt.Fprint(w, name, "() ")
+			}
 		}
-		fmt.Fprint(w, relfile, ":", line, ": ")
-	case Func:
-		fmt.Fprint(w, runtime.FuncForPC(pc).Name(), "() ")
 	}
 	if len(format) > 0 {
 		fmt.Fprintf(w, format, args...)
@@ -134,10 +142,7 @@ func (style Style) log(format string, _ interface{}, args ...interface{}) error 
 	} else {
 		fmt.Fprintln(w, args...)
 	}
-	if err, ok := args[0].(error); ok {
-		return err
-	}
-	return nil
+	return err
 }
 
 func gopath() string {

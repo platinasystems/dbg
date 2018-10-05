@@ -45,4 +45,10 @@ github.com/platinasystems/dbg.Test() invalid argument formatted
 	} else if testing.Verbose() {
 		os.Stdout.Write(buf.Bytes())
 	}
+	if NoOp.Log(nil) != nil {
+		t.Fatal("not nil")
+	}
+	if NoOp.Log(os.ErrInvalid) != os.ErrInvalid {
+		t.Fatal("not invalid")
+	}
 }
