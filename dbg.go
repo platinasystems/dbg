@@ -54,31 +54,10 @@ import (
 type Style int
 
 const (
-	NoOp Style = iota
-	/*
-		[nothing printed]
-		[nothing formatted]
-	*/
-	Plain
-	/*
-		printed
-		formatted
-	*/
-	FileLine
-	/*
-		dbg_test.go:22: printed
-		dbg_test.go:23: formatted
-
-		or if file is out of current tree,
-
-		github.com/platinasystems/dbg/dbt_test.go:22: printed
-		github.com/platinasystems/dbg/dbt_test.go:23: formatted
-	*/
-	Func
-	/*
-		github.com/platinasystems/dbg.Test() printed
-		github.com/platinasystems/dbg.Test() formatted
-	*/
+	NoOp     Style = iota
+	Plain          // TEXT
+	FileLine       // github.com/platinasystems/dbg_test.go:22: TEXT
+	Func           // github.com/platinasystems/dbg.Test() TEXT
 	nStyles
 )
 
